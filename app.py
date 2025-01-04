@@ -10,11 +10,11 @@ def home():
 
 @app.route('/earthquakes', methods=['GET'])
 def get_earthquakes():
-    startdate = request.args.get('startdate', '2024-01-01')
-    enddate = request.args.get('enddate', '2025-01-01')
-    minmagnitude = float(request.args.get('minmagnitude', 0))
+    startdate = request.args.get('startdate','2024-1-1')
+    enddate = request.args.get('enddate', '2025-12-31')
+    minmagnitude = float(request.args.get('minmagnitude', 3))
 
-    # Fetch earthquake data from EMSC
+    # Fetch earthquake data from EMSC API
     url = (
         f"https://www.seismicportal.eu/fdsnws/event/1/query?"
         f"format=json&minlatitude=39.5&maxlatitude=42.7&"
@@ -26,6 +26,8 @@ def get_earthquakes():
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
+
+        # Extract relevant earthquake data
         earthquakes = [
             {
                 'latitude': feature['geometry']['coordinates'][1],
@@ -33,14 +35,18 @@ def get_earthquakes():
                 'magnitude': feature['properties']['mag'],
                 'timestamp': feature['properties']['time']
             }
-            for feature in data['features']
+            for feature in data.get('features', [])
         ]
+
+        # Debugging output
+        print(f"Filtered Earthquakes: {len(earthquakes)} returned.")
         return jsonify(earthquakes)
-    except Exception as e:
-        return jsonify({'error': str(e)})
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching earthquake data: {e}")
+        return jsonify({'error': 'Failed to fetch data from the seismic database.'}), 500
+
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-

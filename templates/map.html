@@ -1,114 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Earthquake Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            width: 75%;
+            height: 100vh;
+            float: left;
+        }
+        #controls {
+            width: 25%;
+            height: 100vh;
+            float: right;
+            padding: 20px;
+            box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2);
+        }
+        .slider-container {
+            margin-bottom: 30px;
+        }
+        .slider-label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <div id="map" style="width: 100%; height: 600px;"></div>
-    <div id="time-slider"></div>
-<script src="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
+    <div id="map"></div>
+    <div id="controls">
+        <div class="slider-container">
+            <div class="slider-label">Time Range</div>
+            <div id="time-slider"></div>
+        </div>
+        <div class="slider-container">
+            <div class="slider-label">Minimum Magnitude</div>
+            <div id="magnitude-slider"></div>
+        </div>
+    </div>
 
-    <form id="filter-form">
-        <label for="startdate">Start Date:</label>
-        <input type="date" id="startdate" required>
-        <label for="enddate">End Date:</label>
-        <input type="date" id="enddate" required>
-        <label for="minmagnitude">Min Magnitude:</label>
-        <input type="number" id="minmagnitude" step="0.1" required>
-        <button type="submit">Filter</button>
-    </form>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.js"></script>
     <script>
         // Initialize the map
-        var map = L.map('map').setView([41.33, 19.82], 7); // Centered in Albania
-    
-        // Add OpenStreetMap tiles
+        const map = L.map('map').setView([41.33, 19.82], 7); // Centered in Albania
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 18,
         }).addTo(map);
-    
-        // Fetch earthquake data
-        fetch('/earthquakes')
-            .then(response => response.json())
-            .then(data => {
-                data.forEach(quake => {
-                    L.marker([quake.latitude, quake.longitude])
-                        .bindPopup(`<b>Magnitude:</b> ${quake.magnitude}<br><b>Time:</b> ${new Date(quake.timestamp).toLocaleString()}`)
-                        .addTo(map);
-                });
-            })
-            .catch(err => console.error('Error fetching earthquake data:', err));
-            document.getElementById('filter-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const startdate = document.getElementById('startdate').value;
-        const enddate = document.getElementById('enddate').value;
-        const minmagnitude = document.getElementById('minmagnitude').value;
 
-        fetch(`/earthquakes?startdate=${startdate}&enddate=${enddate}&minmagnitude=${minmagnitude}`)
-            .then(response => response.json())
-            .then(data => {
-                // Clear existing markers and add new ones
-                markers.clearLayers();
-                data.forEach(quake => {
-                    L.marker([quake.latitude, quake.longitude])
-                        .bindPopup(`<b>Magnitude:</b> ${quake.magnitude}<br><b>Time:</b> ${new Date(quake.timestamp).toLocaleString()}`)
-                        .addTo(markers);
-                });
-                map.addLayer(markers);
-            })
-            .catch(err => console.error('Error fetching filtered data:', err));
-    });
-    noUiSlider.create(document.getElementById('time-slider'), {
-        start: [2000, 2025],
-        range: {
-            'min': 1900,
-            'max': 2025
-        },
-        step: 1,
-        tooltips: true,
-        connect: true
-    });
+        const markers = L.layerGroup().addTo(map); // Layer group for earthquake markers
 
-    document.getElementById('time-slider').noUiSlider.on('change', function(values) {
-        const startdate = `${Math.floor(values[0])}-01-01`;
-        const enddate = `${Math.floor(values[1])}-12-31`;
-
-        fetch(`/earthquakes?startdate=${startdate}&enddate=${enddate}`)
-            .then(response => response.json())
-            .then(data => {
-                markers.clearLayers();
-                data.forEach(quake => {
-                    L.marker([quake.latitude, quake.longitude])
-                        .bindPopup(`<b>Magnitude:</b> ${quake.magnitude}<br><b>Time:</b> ${new Date(quake.timestamp).toLocaleString()}`)
-                        .addTo(markers);
-                });
-                map.addLayer(markers);
-            });
-    });
-    fetch('/earthquakes')
-        .then(response => response.json())
-        .then(data => {
-            const heatData = data.map(quake => [quake.latitude, quake.longitude, quake.magnitude]);
-            const heat = L.heatLayer(heatData, { radius: 25 }).addTo(map);
+        // Time Slider Setup
+        const timeSlider = document.getElementById('time-slider');
+        noUiSlider.create(timeSlider, {
+            start: [2024,2025],
+            range: {
+                min: 1904,
+                max: 2025,
+            },
+            step: 1,
+            tooltips: true,
+            connect: true,
         });
-        const markers = L.markerClusterGroup();
-    fetch('/earthquakes')
+
+        // Magnitude Slider Setup
+        const magnitudeSlider = document.getElementById('magnitude-slider');
+        noUiSlider.create(magnitudeSlider, {
+            start: 3.0,
+            range: {
+                min: 0.0,
+                max: 10.0,
+            },
+            step: 0.1,
+            tooltips: true,
+        });
+
+        // Fetch and Update Markers
+        function updateMarkers(startDate, endDate, minMagnitude) {
+    fetch(`/earthquakes?startdate=${startDate}&enddate=${endDate}&minmagnitude=${minMagnitude}`)
         .then(response => response.json())
         .then(data => {
+            console.log('Fetched Data:', data); // Debugging
+            markers.clearLayers(); // Clear existing markers
             data.forEach(quake => {
                 L.marker([quake.latitude, quake.longitude])
                     .bindPopup(`<b>Magnitude:</b> ${quake.magnitude}<br><b>Time:</b> ${new Date(quake.timestamp).toLocaleString()}`)
                     .addTo(markers);
             });
-            map.addLayer(markers);
+        })
+        .catch(err => console.error('Error fetching earthquake data:', err));
+}
+
+
+
+        // Initial fetch
+        const initialStart = `${Math.floor(timeSlider.noUiSlider.get()[0])}-01-01`;
+        const initialEnd = `${Math.floor(timeSlider.noUiSlider.get()[1])}-12-31`;
+        const initialMagnitude = magnitudeSlider.noUiSlider.get();
+        updateMarkers(initialStart, initialEnd, initialMagnitude);
+
+        // Listen to Slider Changes
+        timeSlider.noUiSlider.on('change', () => {
+            const [start, end] = timeSlider.noUiSlider.get().map(year => `${Math.floor(year)}-01-01`);
+            const magnitude = magnitudeSlider.noUiSlider.get();
+            updateMarkers(start, end, magnitude);
         });
+
+        magnitudeSlider.noUiSlider.on('update', () => {
+    const [start, end] = timeSlider.noUiSlider.get().map(year => `${Math.floor(year)}-01-01`);
+    const magnitude = magnitudeSlider.noUiSlider.get();
+    console.log(`Updating with magnitude: ${magnitude}, start: ${start}, end: ${end}`); // Debugging
+    updateMarkers(start, end, magnitude);
+});
+
     </script>
-    
-    
 </body>
 </html>
