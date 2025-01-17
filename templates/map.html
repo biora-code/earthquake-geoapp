@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earthquake Map</title>
+    <title>Earthquake Heatmap</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat/dist/leaflet-heat.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,10 +47,12 @@
             <div class="slider-label">Minimum Magnitude</div>
             <div id="magnitude-slider"></div>
         </div>
+        <div class="slider-container">
+            <input type="checkbox" id="toggle-markers" checked>
+            <label for="toggle-markers">Show Markers</label>
+        </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.6.1/dist/nouislider.min.js"></script>
     <script>
         // Initialize the map
         const map = L.map('map').setView([41.33, 19.82], 7); // Centered in Albania
@@ -55,14 +60,15 @@
             maxZoom: 18,
         }).addTo(map);
 
-        const markers = L.layerGroup().addTo(map); // Layer group for earthquake markers
+        const markers = L.layerGroup().addTo(map); // Marker layer for earthquakes
+        let heatLayer = null; // Initialize heatmap layer
 
         // Time Slider Setup
         const timeSlider = document.getElementById('time-slider');
         noUiSlider.create(timeSlider, {
-            start: [2024,2025],
+            start: [2024, 2025],
             range: {
-                min: 1904,
+                min: 1900,
                 max: 2025,
             },
             step: 1,
@@ -76,29 +82,98 @@
             start: 3.0,
             range: {
                 min: 0.0,
-                max: 10.0,
+                max: 7.2,
             },
             step: 0.1,
             tooltips: true,
         });
 
-        // Fetch and Update Markers
+        // Fetch and Update Heatmap and Markers
         function updateMarkers(startDate, endDate, minMagnitude) {
-    fetch(`/earthquakes?startdate=${startDate}&enddate=${endDate}&minmagnitude=${minMagnitude}`)
-        .then(response => response.json())
-        .then(data => {
-            console.log('Fetched Data:', data); // Debugging
-            markers.clearLayers(); // Clear existing markers
-            data.forEach(quake => {
-                L.marker([quake.latitude, quake.longitude])
-                    .bindPopup(`<b>Magnitude:</b> ${quake.magnitude}<br><b>Time:</b> ${new Date(quake.timestamp).toLocaleString()}`)
-                    .addTo(markers);
-            });
+            fetch(`/earthquakes?startdate=${startDate}&enddate=${endDate}&minmagnitude=${minMagnitude}`)
+                .then(response => {
+                    if (response.status === 204) {
+                        console.warn('No data available for the selected filters.');
+                        alert('No data available for the selected filters.');
+                        return [];
+                    }
+
+                    if (!response.ok) {
+                        console.error('Server returned an error:', response.status, response.statusText);
+                        alert('Failed to fetch earthquake data.');
+                        return [];
+                    }
+
+                    // Check if response body is empty
+                    return response.text().then(text => {
+                        if (!text) {
+                            console.warn('Empty response body.');
+                            alert('No data available for the selected filters.');
+                            return [];
+                        }
+
+                        // Parse JSON
+                        return JSON.parse(text);
+                    });
+                })
+                .then(data => {
+                    if (!Array.isArray(data)) {
+                        console.warn('Unexpected response format:', data);
+                        return;
+                    }
+
+                    markers.clearLayers(); // Clear existing markers
+
+                    data.forEach(quake => {
+    if (quake.latitude && quake.longitude) {
+        const popupContent = `
+            <strong>Magnitude:</strong> ${quake.magnitude}<br>
+            <strong>Location:</strong> (${quake.latitude}, ${quake.longitude})<br>
+            <strong>Date & Time:</strong> ${quake.timestamp || 'N/A'}<br>
+            <strong>Depth:</strong> ${quake.depth || 'Unknown'} km<br>
+        `;
+        
+        L.circleMarker([quake.latitude, quake.longitude], {
+            radius: 4, // Fixed small size
+            color: quake.magnitude >= 5 ? 'black' : 'dark blue', // Color based on magnitude
+            fillOpacity: 0.7,
+            weight: 1,
         })
-        .catch(err => console.error('Error fetching earthquake data:', err));
-}
+        .bindPopup(popupContent)
+        .addTo(markers);
+    }
+});
 
 
+
+
+                    // Create Heatmap Layer Data
+                    const heatmapData = data.map(quake => [
+                        quake.latitude,
+                        quake.longitude,
+                        quake.magnitude || 1.0 // Magnitude determines intensity
+                    ]);
+
+                    if (heatmapData.length === 0) {
+                        console.warn('No earthquake data to display.');
+                        return;
+                    }
+
+                    // Clear existing heatmap layer
+                    if (window.heatmapLayer) {
+                        map.removeLayer(window.heatmapLayer);
+                    }
+
+                    // Add Heatmap Layer
+                    window.heatmapLayer = L.heatLayer(heatmapData, {
+                        radius: 25,
+                        blur: 15,
+                        maxZoom: 12,
+                        gradient: { 0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 1.0: 'red' },
+                    }).addTo(map);
+                })
+                .catch(err => console.error('Error fetching earthquake data:', err));
+        }
 
         // Initial fetch
         const initialStart = `${Math.floor(timeSlider.noUiSlider.get()[0])}-01-01`;
@@ -114,12 +189,19 @@
         });
 
         magnitudeSlider.noUiSlider.on('update', () => {
-    const [start, end] = timeSlider.noUiSlider.get().map(year => `${Math.floor(year)}-01-01`);
-    const magnitude = magnitudeSlider.noUiSlider.get();
-    console.log(`Updating with magnitude: ${magnitude}, start: ${start}, end: ${end}`); // Debugging
-    updateMarkers(start, end, magnitude);
-});
+            const [start, end] = timeSlider.noUiSlider.get().map(year => `${Math.floor(year)}-01-01`);
+            const magnitude = magnitudeSlider.noUiSlider.get();
+            updateMarkers(start, end, magnitude);
+        });
 
+        // Toggle Markers Visibility
+        document.getElementById('toggle-markers').addEventListener('change', (event) => {
+            if (event.target.checked) {
+                markers.addTo(map); // Show markers
+            } else {
+                markers.removeFrom(map); // Hide markers
+            }
+        });
     </script>
 </body>
 </html>
