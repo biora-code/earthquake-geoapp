@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "location": "Tirana, Albania",
+        "description": "Strong shaking felt.",
+        "fall_objects": true,
+        "vibration": true,
+        "predicted_magnitude": 5.0,
+        "submission_time": "2025-01-17T12:00:00Z"
+    },
+    {
+        "id": 2,
+        "location": "41.3270016, 19.8115328",
+        "description": "Shaking",
+        "fall_objects": false,
+        "vibration": true,
+        "predicted_magnitude": 3.1,
+        "submission_time": "2025-01-17T01:08:47.497341Z"
+    }
+]

@@ -2,8 +2,44 @@ import json
 import time
 from flask import Flask, jsonify, render_template, request
 import requests
+from datetime import datetime
 
 app = Flask(__name__)
+
+# File to store reports
+FILE_PATH = "earthquake_reports.json"
+
+def load_reports():
+    """Load existing earthquake reports from JSON file."""
+    try:
+        with open(FILE_PATH, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []  # Return empty list if file doesn't exist
+
+def save_reports(reports):
+    """Save reports to JSON file."""
+    with open(FILE_PATH, "w") as file:
+        json.dump(reports, file, indent=4)
+
+def predict_magnitude(fall_objects, vibration, description):
+    """Simple rule-based magnitude prediction."""
+    magnitude = 3.0  # Base magnitude
+
+    if fall_objects == "yes" and vibration == "yes":
+        magnitude = 5.0
+    elif fall_objects == "yes":
+        magnitude = 4.5
+    elif vibration == "yes":
+        magnitude = 4.0
+
+    # Adjust magnitude based on keywords in description
+    keywords = ["shaking", "rumbling", "cracks", "loud"]
+    for keyword in keywords:
+        if keyword in description.lower():
+            magnitude += 0.1  # Fine-tune based on keyword presence
+
+    return round(min(magnitude, 10.0), 1)  # Cap at 10.
 
 @app.route('/')
 def home():
@@ -81,6 +117,54 @@ def get_earthquakes():
     except requests.exceptions.RequestException as e:
         print(f"Error fetching earthquake data: {e}")
         return jsonify({'error': 'Failed to fetch data from the seismic database.'}), 500
+
+@app.route('/report_earthquake')
+def report_earthquake():
+    return render_template('report_earthquake.html')
+
+
+
+@app.route('/submit_report', methods=['POST'])
+def submit_report():
+    try:
+        # Extract data from the form
+        location = request.form.get('location')
+        description = request.form.get('description')
+        fall_objects = request.form.get('fall_objects') == "yes"
+        vibration = request.form.get('vibration') == "yes"
+        submission_time = datetime.utcnow().isoformat() + "Z"
+
+        # Predict the magnitude
+        predicted_magnitude = predict_magnitude(fall_objects, vibration, description)
+
+        # Load existing reports
+        reports = load_reports()
+
+        # Add new report
+        new_report = {
+            "id": len(reports) + 1,
+            "location": location,
+            "description": description,
+            "fall_objects": fall_objects,
+            "vibration": vibration,
+            "predicted_magnitude": predicted_magnitude,
+            "submission_time": submission_time
+        }
+        reports.append(new_report)
+
+        # Save back to JSON file
+        save_reports(reports)
+
+        # Return response
+        return jsonify({
+            "message": "Thank you for your report!",
+            "predicted_magnitude": predicted_magnitude
+        })
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "Failed to submit the report."}), 500
+
 
 
 if __name__ == '__main__':
