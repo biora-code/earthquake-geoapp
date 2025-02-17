@@ -34,27 +34,57 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
+        /* Heatmap Legend Styling */
+        #heatmap-legend {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 5px;
+            border-radius: 5px;
+            position: absolute;
+            bottom: 5%;
+            left: 5%;
+            width: 100px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        #heatmap-legend div {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        #heatmap-legend span {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <div id="controls">
         <div class="slider-container">
-            <div class="slider-label">Time Range</div>
+            <div class="slider-label">Rreshkit sipas viteve (1900 - 2025)</div>
             <div id="time-slider"></div>
         </div>
         <div class="slider-container">
-            <div class="slider-label">Minimum Magnitude</div>
+            <div class="slider-label">Rreshkit sipas magnitudes minimale</div>
             <div id="magnitude-slider"></div>
         </div>
         <div class="slider-container">
             <input type="checkbox" id="toggle-markers" checked>
-            <label for="toggle-markers">Show Markers</label>
+            <label for="toggle-markers">Shfaq lokacionet e termeteve</label>
         </div>
-            <!-- Add a button to report an earthquake -->
-    <button onclick="location.href='/report_earthquake'" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">
-        Report an Earthquake
-    </button>
+        <!-- Add a button to report an earthquake -->
+        <button onclick="location.href='/report_earthquake'" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">
+            Raporto nje termet
+        </button>
+    </div>
+
+    <div id="heatmap-legend">
+        <p>TO BE FIXED</p>
+        <div><span style="background-color: blue;"></span> Low Magnitude</div>
+        <div><span style="background-color: lime;"></span> Medium Magnitude</div>
+        <div><span style="background-color: yellow;"></span> High Magnitude</div>
+        <div><span style="background-color: red;"></span> Very High Magnitude</div>
     </div>
 
     <script>
@@ -129,27 +159,24 @@
                     markers.clearLayers(); // Clear existing markers
 
                     data.forEach(quake => {
-    if (quake.latitude && quake.longitude) {
-        const popupContent = `
-            <strong>Magnitude:</strong> ${quake.magnitude}<br>
-            <strong>Location:</strong> (${quake.latitude}, ${quake.longitude})<br>
-            <strong>Date & Time:</strong> ${quake.timestamp || 'N/A'}<br>
-            <strong>Depth:</strong> ${quake.depth || 'Unknown'} km<br>
-        `;
-        
-        L.circleMarker([quake.latitude, quake.longitude], {
-            radius: 4, // Fixed small size
-            color: quake.magnitude >= 5 ? 'black' : 'dark blue', // Color based on magnitude
-            fillOpacity: 0.7,
-            weight: 1,
-        })
-        .bindPopup(popupContent)
-        .addTo(markers);
-    }
-});
-
-
-
+                        if (quake.latitude && quake.longitude) {
+                            const popupContent = `
+                                <strong>Magnitude:</strong> ${quake.magnitude}<br>
+                                <strong>Location:</strong> (${quake.latitude}, ${quake.longitude})<br>
+                                <strong>Date & Time:</strong> ${quake.timestamp || 'N/A'}<br>
+                                <strong>Depth:</strong> ${quake.depth || 'Unknown'} km<br>
+                            `;
+                            
+                            L.circleMarker([quake.latitude, quake.longitude], {
+                                radius: 4, // Fixed small size
+                                color: quake.magnitude >= 5 ? 'black' : 'dark blue', // Color based on magnitude
+                                fillOpacity: 0.7,
+                                weight: 1,
+                            })
+                            .bindPopup(popupContent)
+                            .addTo(markers);
+                        }
+                    });
 
                     // Create Heatmap Layer Data
                     const heatmapData = data.map(quake => [
