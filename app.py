@@ -42,7 +42,7 @@ def predict_magnitude(shaking,duration, objects, reaction, damage):
     # Predict magnitude based on the input data
     input_data = np.array([[shaking, duration, objects, reaction, damage]])
     predicted_magnitude = model.predict(input_data)[0]
-    return predicted_magnitude
+    return round(predicted_magnitude,2)
 
 @app.route('/')
 def home():
@@ -141,7 +141,6 @@ def submit_report():
 
         # Predict the magnitude
         predicted_magnitude = predict_magnitude(shaking, duration, objects, reactions, damage)
-        print("DID THE PREDICTION")
         # Load existing reports
         reports = load_reports()
 
@@ -163,10 +162,8 @@ def submit_report():
         save_reports(reports)
 
         # Return response
-        return jsonify({
-            "message": "Thank you for your report!",
-            "predicted_magnitude": predicted_magnitude
-        })
+        return render_template('submit_report.html', predicted_magnitude=predicted_magnitude)
+
 
     except Exception as e:
         print(f"Error: {e}")
