@@ -161,10 +161,10 @@
                     data.forEach(quake => {
                         if (quake.latitude && quake.longitude) {
                             const popupContent = `
-                                <strong>Magnitude:</strong> ${quake.magnitude}<br>
-                                <strong>Location:</strong> (${quake.latitude}, ${quake.longitude})<br>
-                                <strong>Date & Time:</strong> ${quake.timestamp || 'N/A'}<br>
-                                <strong>Depth:</strong> ${quake.depth || 'Unknown'} km<br>
+                                <strong>Magnituda:</strong> ${quake.magnitude}<br>
+                                <strong>Vendndodhja:</strong> (${quake.latitude}, ${quake.longitude})<br>
+                                <strong>Data & Ora:</strong> ${quake.timestamp || 'N/A'}<br>
+                                <strong>Thellesia ne km:</strong> ${quake.depth || 'Unknown'} km<br>
                             `;
                             
                             L.circleMarker([quake.latitude, quake.longitude], {
