@@ -1,0 +1,46 @@
+[
+    {
+        "id": 1,
+        "location": "",
+        "shaking": "1",
+        "duration": "1",
+        "objects": "1",
+        "reactions": null,
+        "damage": "1",
+        "predicted_magnitude": "1",
+        "submission_time": "2025-02-13T22:45:26.883398Z"
+    },
+    {
+        "id": 2,
+        "location": "",
+        "shaking": "3",
+        "duration": "2",
+        "objects": "3",
+        "reactions": null,
+        "damage": "2",
+        "predicted_magnitude": 4.218,
+        "submission_time": "2025-02-13T23:18:30.572000Z"
+    },
+    {
+        "id": 3,
+        "location": "",
+        "shaking": "4",
+        "duration": "2",
+        "objects": "2",
+        "reactions": "2",
+        "damage": "2",
+        "predicted_magnitude": 4.822,
+        "submission_time": "2025-02-13T23:20:35.327864Z"
+    },
+    {
+        "id": 4,
+        "location": "",
+        "shaking": "2",
+        "duration": "2",
+        "objects": "2",
+        "reactions": "1",
+        "damage": "2",
+        "predicted_magnitude": 3.5774000000000012,
+        "submission_time": "2025-02-17T22:33:51.689941Z"
+    }
+]

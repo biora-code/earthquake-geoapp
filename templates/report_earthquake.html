@@ -3,81 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earthquake Experience Form</title>
+    <title>Report Earthquake</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .container { max-width: 600px; margin: auto; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        select, button { width: 100%; padding: 10px; margin-top: 5px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        form {
+            max-width: 600px;
+            margin: auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        textarea, input[type="text"], button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Raporto Termet</h2>
-        <form id="earthquakeForm" action="/report_earthquake" method="POST">
-            <label>Sa te forta ishin lekundjet?</label>
-            <select id="shaking">
-                <option value="1">Nuk u ndjene thuajse fare</option>
-                <option value="2">Lekundje te lehta</option>
-                <option value="3">Lekundje te moderuara</option>
-                <option value="4">Lekundje te forta</option>
-                <option value="5">Lekundje shume te forta</option>
-            </select>
-
-            <label>Sa zgjaten lekundjet?</label>
-            <select id="duration">
-                <option value="1">Me pak se 5 sekonda</option>
-                <option value="2">5 - 10 sekonda</option>
-                <option value="3">10 - 30 sekonda</option>
-                <option value="4">Me shume se 30 sekonda</option>
-            </select>
-
-            <label>Cfare ndodhi me objektet rreth teje?</label>
-            <select id="objects">
-                <option value="1">Nuk u ndodhi gje</option>
-                <option value="2">U lekunden pak ne te djathte/te majte</option>
-                <option value="3">Objektet e vogla rane (libra, vazo etj)</option>
-                <option value="4">Rane objekte te renda (dollapi, frigoriferi etj) </option>
-                <option value="5">Pati kolaps te te gjitha objekteve rreth meje</option>
-            </select>
-
-            <label>Si reaguan njerezit rreth teje?</label>
-            <select id="reaction">
-                <option value="1">Nuk e vune re</option>
-                <option value="2">Disa e ndjene, por nuk u shqetesuan</option>
-                <option value="3">E ndjene thuajse te gjithe, nje pjese e tyre u alarmuan</option>
-                <option value="4">Te gjithe e ndjene dhe dolen jashte menjehere</option>
-                <option value="5">Te gjithe u panikosen dhe pashe dhe te lenduar</option>
-            </select>
-
-            <label>Vure re ndryshime ne ndertesa/rruge?</label>
-            <select id="damage">
-                <option value="1">Nuk pashe demtime</option>
-                <option value="2">Pashe krisje te vogla neper mure</option>
-                <option value="3">Pashe krisje te dukshme neper mure</option>
-                <option value="4">Pashe ndertesa dhe rruge pjeserisht te demtuara</option>
-                <option value="5">Pashe ndertesa/rruge te demtuara rendshem</option>
-            </select>
-
-            <button type="button" onclick="submitForm()">Submit</button>
-        </form>
-
-        <h3>Estimated Magnitude: <span id="magnitude">-</span></h3>
-    </div>
-
     <script>
-        function submitForm() {
-            let shaking = parseInt(document.getElementById("shaking").value);
-            let duration = parseInt(document.getElementById("duration").value);
-            let objects = parseInt(document.getElementById("objects").value);
-            let reaction = parseInt(document.getElementById("reaction").value);
-            let damage = parseInt(document.getElementById("damage").value);
-
-            let totalScore = shaking + duration + objects + reaction + damage;
-            let estimatedMagnitude = (totalScore / 5) + 3;  // Simple scoring model
-
-            document.getElementById("magnitude").innerText = estimatedMagnitude.toFixed(1);
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const locationInput = document.getElementById('location');
+                    locationInput.value = `${position.coords.latitude}, ${position.coords.longitude}`;
+                }, () => {
+                    alert('Unable to fetch your location.');
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
         }
     </script>
+</head>
+<body onload="getLocation()">
+    <h1>Report an Earthquake</h1>
+    <form method="POST" action="/submit_report">
+        <div class="form-group">
+            <label for="location">Your Location (auto-filled):</label>
+            <input type="text" id="location" name="location" readonly required>
+        </div>
+        <label class="form-group">Sa te forta ishin lekundjet?</label>
+        <select id="shaking" name="shaking">
+            <option value="1">Nuk u ndjene thuajse fare</option>
+            <option value="2">Lekundje te lehta</option>
+            <option value="3">Lekundje te moderuara</option>
+            <option value="4">Lekundje te forta</option>
+            <option value="5">Lekundje shume te forta</option>
+        </select>
+        <label class="form-group">Sa zgjaten lekundjet?</label>
+        <select id="duration" name="duration">
+            <option value="1">Me pak se 5 sekonda</option>
+            <option value="2">5 - 10 sekonda</option>
+            <option value="3">10 - 30 sekonda</option>
+            <option value="4">Me shume se 30 sekonda</option>
+        </select>
+        <label class="form-group">Cfare ndodhi me objektet rreth teje?</label>
+        <select id="objects" name="objects">
+            <option value="1">Nuk u ndodhi gje</option>
+            <option value="2">U lekunden pak ne te djathte/te majte</option>
+            <option value="3">Objektet e vogla rane (libra, vazo etj)</option>
+            <option value="4">Rane objekte te renda (dollapi, frigoriferi etj) </option>
+            <option value="5">Pati kolaps te te gjitha objekteve rreth meje</option>
+        </select>
+        <label class="form-group">Si reaguan njerezit rreth teje?</label>
+        <select id="reaction" name="reactions">
+            <option value="1">Nuk e vune re</option>
+            <option value="2">Disa e ndjene, por nuk u shqetesuan</option>
+            <option value="3">E ndjene thuajse te gjithe, nje pjese e tyre u alarmuan</option>
+            <option value="4">Te gjithe e ndjene dhe dolen jashte menjehere</option>
+            <option value="5">Te gjithe u panikosen dhe pashe dhe te lenduar</option>
+        </select>
+        <label class="form-group">Vure re ndryshime ne ndertesa/rruge?</label>
+        <select id="damage" name="damage">
+            <option value="1">Nuk pashe demtime</option>
+            <option value="2">Pashe krisje te vogla neper mure</option>
+            <option value="3">Pashe krisje te dukshme neper mure</option>
+            <option value="4">Pashe ndertesa dhe rruge pjeserisht te demtuara</option>
+            <option value="5">Pashe ndertesa/rruge te demtuara rendshem</option>
+        </select>
+        <button type="submit">Submit Report</button>
+    </form>
 </body>
 </html>

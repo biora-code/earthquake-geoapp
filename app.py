@@ -8,8 +8,41 @@ from sklearn.ensemble import RandomForestRegressor
 
 app = Flask(__name__)
 
+# File to store reports
+FILE_PATH = "earthquake_reports.json"
 
+def load_reports():
+    """Load existing earthquake reports from JSON file."""
+    try:
+        with open(FILE_PATH, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []  # Return empty list if file doesn't exist
 
+def save_reports(reports):
+    """Save reports to JSON file."""
+    with open(FILE_PATH, "w") as file:
+        json.dump(reports, file, indent=4)
+
+def predict_magnitude(shaking,duration, objects, reaction, damage):
+    # Load dataset (simulated), BUT LATER ON WE HAVE TO SWITCH TO READING TO earthquake_reports and magnitude of a certain no of earthquakes nearby
+    report_data = {
+        "shaking": [1, 2, 3, 4, 5, 5, 3, 4, 2, 1],
+        "duration": [1, 2, 3, 4, 4, 3, 2, 2, 1, 1],
+        "objects": [1, 2, 3, 4, 5, 4, 3, 3, 2, 1],
+        "reaction": [1, 2, 3, 4, 5, 5, 4, 3, 2, 1],
+        "damage": [1, 2, 3, 4, 5, 5, 3, 2, 2, 1],
+        "magnitude": [3.1, 3.5, 4.2, 5.0, 6.8, 7.1, 4.5, 5.5, 3.8, 3.0]
+    }
+    X = np.column_stack((report_data["shaking"], report_data["duration"], report_data["objects"], report_data['reaction'], report_data["damage"]))
+    y = np.array(report_data["magnitude"])
+    # Train the model
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X, y)
+    # Predict magnitude based on the input data
+    input_data = np.array([[shaking, duration, objects, reaction, damage]])
+    predicted_magnitude = model.predict(input_data)[0]
+    return predicted_magnitude
 
 @app.route('/')
 def home():
@@ -88,86 +121,57 @@ def get_earthquakes():
         print(f"Error fetching earthquake data: {e}")
         return jsonify({'error': 'Failed to fetch data from the seismic database.'}), 500
 
-# File to store reports
-FILE_PATH = "earthquake_reports.json"
-
-def load_reports():
-    """Load existing earthquake reports from JSON file."""
-    try:
-        with open(FILE_PATH, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return []  # Return empty list if file doesn't exist
-
-def save_reports(reports):
-    """Save reports to JSON file."""
-    with open(FILE_PATH, "w") as file:
-        json.dump(reports, file, indent=4)
-# Load dataset (simulated)
-report_data = {
-    "shaking": [1, 2, 3, 4, 5, 5, 3, 4, 2, 1],
-    "duration": [1, 2, 3, 4, 4, 3, 2, 2, 1, 1],
-    "objects": [1, 2, 3, 4, 5, 4, 3, 3, 2, 1],
-    "reaction": [1, 2, 3, 4, 5, 5, 4, 3, 2, 1],
-    "damage": [1, 2, 3, 4, 5, 5, 3, 2, 2, 1],
-    "magnitude": [3.1, 3.5, 4.2, 5.0, 6.8, 7.1, 4.5, 5.5, 3.8, 3.0]
-}
-
-X = np.column_stack((report_data["shaking"], report_data["duration"], report_data["objects"], report_data['reaction'], report_data["damage"]))
-y = np.array(report_data["magnitude"])
-
-# Train the model
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X, y)
-
-@app.route("/report_earthquake", methods=["POST"])
+@app.route('/report_earthquake')
 def report_earthquake():
-    # Make sure the data is coming in JSON format
-    if request.is_json:
-        report_data = request.get_json()
-        
-        # Extract values from the request data
-        shaking = report_data.get("shaking")
-        duration = report_data.get("duration")
-        objects = report_data.get("objects")
-        reaction = report_data.get("reaction")
-        damage = report_data.get("damage")
+    return render_template('report_earthquake.html')
 
-        # Check if all required fields are provided
-        if None in [shaking, duration, objects, reaction, damage]:
-            return jsonify({"error": "Missing input fields"}), 400
-        
-        # Predict magnitude based on the input data
-        input_data = np.array([[shaking, duration, objects, reaction, damage]])
-        predicted_magnitude = model.predict(input_data)[0]
 
-        # Create report dictionary
-        report = {
+
+@app.route('/submit_report', methods=['POST'])
+def submit_report():
+    try:
+        # Extract data from the form
+        location = request.form.get('location')
+        shaking = request.form.get('shaking')
+        duration = request.form.get('duration')
+        objects = request.form.get('objects')
+        reactions = request.form.get('reactions')
+        damage = request.form.get('damage')
+        submission_time = datetime.utcnow().isoformat() + "Z"
+
+        # Predict the magnitude
+        predicted_magnitude = predict_magnitude(shaking, duration, objects, reactions, damage)
+        print("DID THE PREDICTION")
+        # Load existing reports
+        reports = load_reports()
+
+        # Add new report
+        new_report = {
+            "id": len(reports) + 1,
+            "location": location,
             "shaking": shaking,
             "duration": duration,
             "objects": objects,
-            "reaction": reaction,
+            "reactions": reactions,
             "damage": damage,
-            "predicted_magnitude": round(predicted_magnitude, 1)
+            "predicted_magnitude": predicted_magnitude,
+            "submission_time": submission_time
         }
+        reports.append(new_report)
 
-        # Save the report to the JSON file
-        reports = load_reports()
-        reports.append(report)
+        # Save back to JSON file
         save_reports(reports)
-        
-        # Return success message
-        return jsonify({"message": "Report saved", "predicted_magnitude": report["predicted_magnitude"]})
 
-    # If the request is not in JSON format, return an error
-    return jsonify({"error": "Invalid content type. Expecting JSON data."}), 400
+        # Return response
+        return jsonify({
+            "message": "Thank you for your report!",
+            "predicted_magnitude": predicted_magnitude
+        })
 
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "Failed to submit the report."}), 500
 
-
-@app.route("/reports", methods=["GET"])
-def get_reports():
-    """Retrieve all saved earthquake reports."""
-    return jsonify(load_reports())
 
 
 if __name__ == '__main__':
