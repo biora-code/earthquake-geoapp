@@ -97,5 +97,16 @@
         "damage": "3",
         "predicted_magnitude": 3.86,
         "submission_time": "2025-02-17T23:00:48.069755Z"
+    },
+    {
+        "id": 10,
+        "location": "",
+        "shaking": "1",
+        "duration": "1",
+        "objects": "1",
+        "reactions": "1",
+        "damage": "1",
+        "predicted_magnitude": 3.15,
+        "submission_time": "2025-02-17T23:58:54.989504Z"
     }
 ]
