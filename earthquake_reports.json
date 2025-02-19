@@ -108,5 +108,27 @@
         "damage": "1",
         "predicted_magnitude": 3.15,
         "submission_time": "2025-02-17T23:58:54.989504Z"
+    },
+    {
+        "id": 11,
+        "location": "",
+        "shaking": "1",
+        "duration": "1",
+        "objects": "1",
+        "reactions": "1",
+        "damage": "1",
+        "predicted_magnitude": 3.15,
+        "submission_time": "2025-02-19T20:09:06.504575Z"
+    },
+    {
+        "id": 12,
+        "location": "",
+        "shaking": "1",
+        "duration": "1",
+        "objects": "1",
+        "reactions": "1",
+        "damage": "1",
+        "predicted_magnitude": 3.15,
+        "submission_time": "2025-02-19T20:09:11.393158Z"
     }
 ]

@@ -5,6 +5,8 @@ import requests
 from datetime import datetime
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from bs4 import BeautifulSoup
+
 
 app = Flask(__name__)
 
@@ -168,8 +170,6 @@ def submit_report():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": "Failed to submit the report."}), 500
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
