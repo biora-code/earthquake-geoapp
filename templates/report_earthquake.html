@@ -3,35 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raporto nje termet</title>
+    <title>Raporto një Tërmet</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        form {
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
             max-width: 600px;
-            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #007BFF;
         }
         .form-group {
             margin-bottom: 15px;
         }
         label {
+            font-weight: bold;
             display: block;
             margin-bottom: 5px;
-            font-weight: bold;
         }
-        textarea, input[type="text"], button {
+        input, select, button {
             width: 100%;
             padding: 10px;
-            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        select, input {
+            background-color: #fff;
         }
         button {
             background-color: #007BFF;
             color: white;
             border: none;
             cursor: pointer;
+            font-size: 18px;
+            transition: 0.3s;
         }
         button:hover {
             background-color: #0056b3;
@@ -41,8 +61,7 @@
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
-                    const locationInput = document.getElementById('location');
-                    locationInput.value = `${position.coords.latitude}, ${position.coords.longitude}`;
+                    document.getElementById('location').value = `${position.coords.latitude}, ${position.coords.longitude}`;
                 }, () => {
                     alert('Unable to fetch your location.');
                 });
@@ -53,52 +72,64 @@
     </script>
 </head>
 <body onload="getLocation()">
-    <h1>Raporto nje termet</h1>
-    <form method="POST" action="/submit_report">
-        <div class="form-group">
-            <label for="location">Your Location (auto-filled):</label>
-            <input type="text" id="location" name="location" readonly required>
-        </div>
-        <label class="form-group">Sa te forta ishin lekundjet?</label>
-        <select id="shaking" name="shaking">
-            <option value="1">Nuk u ndjene thuajse fare</option>
-            <option value="2">Lekundje te lehta</option>
-            <option value="3">Lekundje te moderuara</option>
-            <option value="4">Lekundje te forta</option>
-            <option value="5">Lekundje shume te forta</option>
-        </select>
-        <label class="form-group">Sa zgjaten lekundjet?</label>
-        <select id="duration" name="duration">
-            <option value="1">Me pak se 5 sekonda</option>
-            <option value="2">5 - 10 sekonda</option>
-            <option value="3">10 - 30 sekonda</option>
-            <option value="4">Me shume se 30 sekonda</option>
-        </select>
-        <label class="form-group">Cfare ndodhi me objektet rreth teje?</label>
-        <select id="objects" name="objects">
-            <option value="1">Nuk u ndodhi gje</option>
-            <option value="2">U lekunden pak ne te djathte/te majte</option>
-            <option value="3">Objektet e vogla rane (libra, vazo etj)</option>
-            <option value="4">Rane objekte te renda (dollapi, frigoriferi etj) </option>
-            <option value="5">Pati kolaps te te gjitha objekteve rreth meje</option>
-        </select>
-        <label class="form-group">Si reaguan njerezit rreth teje?</label>
-        <select id="reaction" name="reactions">
-            <option value="1">Nuk e vune re</option>
-            <option value="2">Disa e ndjene, por nuk u shqetesuan</option>
-            <option value="3">E ndjene thuajse te gjithe, nje pjese e tyre u alarmuan</option>
-            <option value="4">Te gjithe e ndjene dhe dolen jashte menjehere</option>
-            <option value="5">Te gjithe u panikosen dhe pashe dhe te lenduar</option>
-        </select>
-        <label class="form-group">Vure re ndryshime ne ndertesa/rruge?</label>
-        <select id="damage" name="damage">
-            <option value="1">Nuk pashe demtime</option>
-            <option value="2">Pashe krisje te vogla neper mure</option>
-            <option value="3">Pashe krisje te dukshme neper mure</option>
-            <option value="4">Pashe ndertesa dhe rruge pjeserisht te demtuara</option>
-            <option value="5">Pashe ndertesa/rruge te demtuara rendshem</option>
-        </select>
-        <button type="submit">Submit Report</button>
-    </form>
+    <div class="container">
+        <h1>Raporto një Tërmet</h1>
+        <form method="POST" action="/submit_report">
+            <div class="form-group">
+                <label for="location">Vendndodhja juaj (mbushet automatikisht):</label>
+                <input type="text" id="location" name="location" readonly required>
+            </div>
+            <div class="form-group">
+                <label>Sa të forta ishin lëkundjet?</label>
+                <select id="shaking" name="shaking">
+                    <option value="1">Nuk u ndjenë thuajse fare</option>
+                    <option value="2">Lëkundje të lehta</option>
+                    <option value="3">Lëkundje të moderuara</option>
+                    <option value="4">Lëkundje të forta</option>
+                    <option value="5">Lëkundje shumë të forta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Sa zgjatën lëkundjet?</label>
+                <select id="duration" name="duration">
+                    <option value="1">Më pak se 5 sekonda</option>
+                    <option value="2">5 - 10 sekonda</option>
+                    <option value="3">10 - 30 sekonda</option>
+                    <option value="4">Më shumë se 30 sekonda</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Çfarë ndodhi me objektet rreth teje?</label>
+                <select id="objects" name="objects">
+                    <option value="1">Nuk u ndodhi gjë</option>
+                    <option value="2">U lëkundën pak në të djathtë/të majtë</option>
+                    <option value="3">Objektet e vogla ranë (libra, vazo etj.)</option>
+                    <option value="4">Ranë objekte të rënda (dollapi, frigoriferi etj.)</option>
+                    <option value="5">Pati kolaps të të gjitha objekteve rreth meje</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Si reaguan njerëzit rreth teje?</label>
+                <select id="reaction" name="reactions">
+                    <option value="1">Nuk e vunë re</option>
+                    <option value="2">Disa e ndjenë, por nuk u shqetësuan</option>
+                    <option value="3">E ndjenë thuajse të gjithë, një pjesë e tyre u alarmuan</option>
+                    <option value="4">Të gjithë e ndjenë dhe dolën jashtë menjëherë</option>
+                    <option value="5">Të gjithë u panikosen dhe pashë edhe të lënduar</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Vure re ndryshime në ndërtesa/rrugë?</label>
+                <select id="damage" name="damage">
+                    <option value="1">Nuk pashë dëmtime</option>
+                    <option value="2">Pashë krisje të vogla nëpër mure</option>
+                    <option value="3">Pashë krisje të dukshme nëpër mure</option>
+                    <option value="4">Pashë ndërtesa dhe rrugë pjesërisht të dëmtuara</option>
+                    <option value="5">Pashë ndërtesa/rrugë të dëmtuara rëndë</option>
+                </select>
+            </div>
+            <button type="submit">Dërgo Raportin</button>
+        </form>
+    </div>
 </body>
 </html>

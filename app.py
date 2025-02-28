@@ -5,7 +5,6 @@ import requests
 from datetime import datetime
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
-from bs4 import BeautifulSoup
 
 
 app = Flask(__name__)
@@ -25,7 +24,7 @@ def save_reports(reports):
     """Save reports to JSON file."""
     with open(FILE_PATH, "w") as file:
         json.dump(reports, file, indent=4)
-
+'''
 def predict_magnitude(shaking,duration, objects, reaction, damage):
     # Load dataset (simulated), BUT LATER ON WE HAVE TO SWITCH TO READING TO earthquake_reports and magnitude of a certain no of earthquakes nearby
     report_data = {
@@ -45,15 +44,26 @@ def predict_magnitude(shaking,duration, objects, reaction, damage):
     input_data = np.array([[shaking, duration, objects, reaction, damage]])
     predicted_magnitude = model.predict(input_data)[0]
     return round(predicted_magnitude,2)
+'''
+def calculate_mmi(shaking, duration, objects, reactions, damage):
+    """
+    Calculates the Modified Mercalli Intensity (MMI) based on user responses.
+    """
+    mmi = (2 * shaking + duration + 1.5 * objects + reactions + 2 * damage) / 6
+    return round(mmi, 1)
+
+def estimate_magnitude(mmi):
+    """
+    Estimates earthquake magnitude from MMI using an empirical formula.
+    """
+    magnitude = 1.5 + 0.5 * mmi
+    return round(magnitude, 1)
 
 @app.route('/')
 def home():
     return render_template('map.html')
 
 def fetch_data_with_retry(url, max_retries=3, backoff_factor=2):
-    """
-    Fetch data from the given URL with retry on rate limiting.
-    """
     retries = 0
     headers = {'User-Agent': 'MyFlaskApp/1.0'}
     
@@ -128,21 +138,21 @@ def report_earthquake():
     return render_template('report_earthquake.html')
 
 
-
 @app.route('/submit_report', methods=['POST'])
 def submit_report():
     try:
         # Extract data from the form
         location = request.form.get('location')
-        shaking = request.form.get('shaking')
-        duration = request.form.get('duration')
-        objects = request.form.get('objects')
-        reactions = request.form.get('reactions')
-        damage = request.form.get('damage')
+        shaking = int(request.form.get('shaking'))
+        duration = int(request.form.get('duration'))
+        objects = int(request.form.get('objects'))
+        reactions = int(request.form.get('reactions'))
+        damage = int(request.form.get('damage'))
         submission_time = datetime.utcnow().isoformat() + "Z"
 
-        # Predict the magnitude
-        predicted_magnitude = predict_magnitude(shaking, duration, objects, reactions, damage)
+        # Compute MMI and Magnitude
+        mmi = calculate_mmi(shaking, duration, objects, reactions, damage)
+        predicted_magnitude = estimate_magnitude(mmi)
         # Load existing reports
         reports = load_reports()
 
